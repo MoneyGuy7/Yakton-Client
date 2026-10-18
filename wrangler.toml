@@ -1,0 +1,27 @@
+name = "yakton-client"
+main = "src/index.js"
+compatibility_date = "2026-10-01"
+
+# Custom domain. You'll point client.yakton.net at this Worker from the
+# Cloudflare dashboard (Workers & Pages -> yakton-client -> Settings ->
+# Domains & Routes -> Add Custom Domain), which also handles the DNS
+# record and TLS cert automatically. See README.md.
+#
+# If you'd rather manage the route/DNS yourself instead of using the
+# "Custom Domain" button, uncomment this and make sure an orange-clouded
+# DNS record for client.yakton.net already exists in the zone:
+# routes = [
+#   { pattern = "client.yakton.net/*", zone_name = "yakton.net" }
+# ]
+
+# KV namespace used to store the current download URL/label.
+# Create it with:
+#   wrangler kv namespace create CONFIG_KV
+# then paste the id it prints into the line below.
+[[kv_namespaces]]
+binding = "CONFIG_KV"
+id = "REPLACE_WITH_KV_NAMESPACE_ID"
+
+# Secrets (never put real values here — set them with `wrangler secret put`):
+#   ADMIN_PASSWORD   - the admin panel password
+#   SESSION_SECRET   - random string used to sign admin login sessions
