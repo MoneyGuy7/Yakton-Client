@@ -1,4 +1,5 @@
 import { LOGO_PNG_BASE64 } from "./logo.js";
+import { PACK_ZIP_BASE64, PACK_FILENAME } from "./pack.js";
 
 /**
  * Yakton Client — Cloudflare Worker
@@ -31,8 +32,11 @@ import { LOGO_PNG_BASE64 } from "./logo.js";
 const SESSION_COOKIE = "yakton_admin_session";
 const SESSION_TTL_SECONDS = 60 * 60 * 12; // 12 hours
 
-const DEFAULT_DOWNLOAD_URL = "https://example.com/yakton-client-setup.exe";
-const DEFAULT_DOWNLOAD_LABEL = "Yakton Client Installer";
+// Defaults to the built-in packaged file served at /files/<name> below.
+// Change this from /admin any time you want the button to point somewhere
+// else instead (a different URL, a newer build, etc).
+const DEFAULT_DOWNLOAD_URL = `/files/${PACK_FILENAME}`;
+const DEFAULT_DOWNLOAD_LABEL = "Yakton Client";
 
 // ---------------------------------------------------------------------
 // Small helpers
@@ -420,9 +424,24 @@ export default {
         });
       }
 
+      if (request.method === "GET" && pathname === `/files/${PACK_FILENAME}`) {
+        const bytes = Uint8Array.from(atob(PACK_ZIP_BASE64), (c) => c.charCodeAt(0));
+        return new Response(bytes, {
+          headers: {
+            "content-type": "application/zip",
+            "content-disposition": `attachment; filename="${PACK_FILENAME}"`,
+            "cache-control": "public, max-age=3600",
+          },
+        });
+      }
+
       if (request.method === "GET" && pathname === "/download") {
         const config = await getConfig(env);
-        return Response.redirect(config.url, 302);
+        // Relative paths (e.g. the built-in /files/... route) are served
+        // straight from this worker; anything else is treated as a full
+        // external URL and redirected to.
+        const target = config.url.startsWith("/") ? new URL(config.url, url).toString() : config.url;
+        return Response.redirect(target, 302);
       }
 
       if (pathname === "/admin" && request.method === "GET") {
